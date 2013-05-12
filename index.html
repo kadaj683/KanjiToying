@@ -1,11 +1,13 @@
 <html>
 <head>
 	<script src="jquery-2.0.0.min.js"></script>
+<script src="http://code.highcharts.com/highcharts.js"></script>
+<script src="http://code.highcharts.com/modules/exporting.js"></script>
 	<style type="text/css">
 		#input
 		{
 			border: solid 1px black;
-			background: green;
+			background: lightgreen;
 			cursor: pointer;
 		} 
 	</style>
@@ -13,6 +15,7 @@
 <body>
 	<canvas id="input" height="500" width="500"></canvas>
 	<div id="debug"></div>
+	<div id="chart" style="height: 500px; min-width: 500px"></div>
 	<script src="recognition.js"></script>
 </body>
 </html>
