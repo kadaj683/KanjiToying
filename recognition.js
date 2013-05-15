@@ -3,6 +3,14 @@ var context;
 var clicking=false;
 
 var chart;
+var charts=[];
+
+var pt;
+var coords=[];
+var len=0;
+
+var element;
+var visible=false;
 
 $(function(){
 	canvas = document.getElementById("input");
@@ -29,24 +37,24 @@ $(function(){
 		$('#debug').html("Done Clicking");
 	});
 
-	makechart();
+	$("#toggle").click(function() {
+		visible = !visible;
+		if(visible) {
+			for(var i=0; i< charts.length;i++)
+				charts[i].redraw();
+			$(".charts").show();
+		}
+		else $(".charts").hide();  
+	})
+
+	element = $("#chart");
+
+	//makechart();
 
 })
 
 
-var pt;
-var angles=[];
-var len=0;
-function press(x,y){
-	len=0;
-	context.strokeStyle = "black";
-	context.lineWidth = 3;
-	context.beginPath();
-	context.moveTo(x,y);
 
-	angles=[];
-	pt={x:x,y:y};
-}
 function distance(p1,p2){
 	var width = p2.x-p1.x;
 	var height = p2.y-p1.y;
@@ -146,6 +154,16 @@ function resample(a,len,n) {
 
 }
 
+function press(x,y){
+	len=0;
+	context.strokeStyle = "black";
+	context.lineWidth = 3;
+	context.beginPath();
+	context.moveTo(x,y);
+
+	coords=[];
+	pt={x:x,y:y};
+}
 
 function move(x,y){
 	context.lineTo(x,y);
@@ -165,14 +183,14 @@ function move(x,y){
 	pt=pt1;
 	len+=dist;
 	//angles.push({x:len,y:angle,name:angles.length});
-	angles.push({x:x,y:y,name:angles.length});
+	coords.push({x:x,y:y,name:coords.length});
 	$('#debug').html(angle);
 }
 function release(x,y){
 	context.lineTo(x,y);
 	context.stroke();
 
-	var resampled=resample(angles,len,30);
+	var resampled=resample(coords,len,30);
 
 	for(var k=0;k<resampled.length;k++) {
 		var p=resampled[k];
@@ -182,21 +200,29 @@ function release(x,y){
 
 	//chart.addSeries({data:rev(diff(diff_angle(angles)))});
 	//chart.addSeries({data:distant(diff_angle(angles))});
+
+	insertChart();
 	for(var i=1;i<=10;i++)
-		chart.addSeries({data:vec_diff(resampled,i)});
+		insertSeries(vec_diff(resampled,i));
 	//chart.addSeries({data:vec_diff(angles,2)});
 	//chart.addSeries({data:vec_diff(angles,3)});
 
 }
 
 
+function insertSeries(data) {
+	chart.addSeries({data:data},visible);
+}
 
 
 
-function makechart()
-{
+function insertChart() {
 	//var data=[1,2,3,4,-5];
-   	chart=$('#chart').highcharts({
+	var style=' style="height: 500px; width: 100%';
+	if(!visible) style+='; display:none"';
+	style+='"';
+	var div='<div class="charts"'+style+'></div>'
+   	chart=$(div).insertAfter(element).highcharts({
         chart: {
             zoomType: 'x',
             spacingRight: 20
@@ -244,5 +270,6 @@ function makechart()
         }]*/
     });
     chart=chart.highcharts();
+    charts.push(chart);
 
 }
