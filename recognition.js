@@ -36,6 +36,7 @@ $(function(){
 
 var pt;
 var angles=[];
+var len=0;
 function press(x,y){
 	context.strokeStyle = "black";
 	context.lineWidth = 3;
@@ -52,11 +53,11 @@ function distance(p1,p2){
 }
 
 function diff(a){
-	var res=[];
-	var p0={x:0,y:a[0]}
-	for(var x=1;x<a.length;x++){
-		var p={x:x,y:a[x]};
-		res.push(((p.y-p0.y)/(p.x-p0.x)));
+	var res = [];
+	var p0 = a[0]; 
+	for(var i=1;i<a.length;i++){
+		var p=a[i];
+		res.push({name:p0.name,x:p0.x,y:((p.y-p0.y)/(p.x-p0.x))});
 		p0=p;
 	}
 	return res;
@@ -64,21 +65,32 @@ function diff(a){
 	
 }
 function diff_angle(a){
-	var res=[];
-	var p0={x:0,y:a[0]}
-	for(var x=1;x<a.length;x++){
-		var p={x:x,y:a[x]};
-		res.push(Math.atan2((p.y-p0.y),(p.x-p0.x)));
+	var res = [];
+	var p0 = a[0]; 
+	for(var i=1;i<a.length;i++){
+		var p=a[i];
+		res.push({name:p0.name,x:p0.x,y:Math.atan2((p.y-p0.y),(p.x-p0.x))});
 		p0=p;
 	}
 	return res;	
 }
 function rev(a){
-	var res=[];
-	var p0={x:0,y:a[0]}
-	for(var x=1;x<a.length;x++){
-		var p={x:x,y:a[x]};
-		res.push(1/Math.abs(p.y-p0.y));
+	var res = [];
+	var p0 = a[0]; 
+	for(var i=1;i<a.length;i++){
+		var p=a[i];
+		res.push({name:p0.name,x:p0.x,y:Math.abs(1/(p.y-p0.y))});
+		p0=p;
+	}
+	return res;	
+}
+
+function distant(a){
+	var res = [];
+	var p0 = a[0]; 
+	for(var i=1;i<a.length;i++){
+		var p=a[i];
+		res.push({name:p0.name,x:i,y:distance(p,p0)});
 		p0=p;
 	}
 	return res;	
@@ -102,7 +114,8 @@ function move(x,y){
 	context.fillText(angles.length,x+20,y);
 
 	pt=pt1;
-	angles.push(angle);
+	len+=dist;
+	angles.push({x:len,y:angle,name:angles.length});
 	$('#debug').html(angle);
 }
 function release(x,y){
@@ -110,15 +123,15 @@ function release(x,y){
 	context.stroke();
 
 	
-	chart.addSeries({data:rev(diff(diff_angle(angles)))});
-
+	//chart.addSeries({data:rev(diff(diff_angle(angles)))});
+	chart.addSeries({data:distant(diff_angle(angles))});
 }
 
 
 
 function makechart()
 {
-	var data=[1,2,3,4,-5];
+	//var data=[1,2,3,4,-5];
    	chart=$('#chart').highcharts({
         chart: {
             zoomType: 'x',
