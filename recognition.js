@@ -38,6 +38,7 @@ var pt;
 var angles=[];
 var len=0;
 function press(x,y){
+	len=0;
 	context.strokeStyle = "black";
 	context.lineWidth = 3;
 	context.beginPath();
@@ -96,6 +97,56 @@ function distant(a){
 	return res;	
 }
 
+function vec_diff(a,n) {
+	var res = [];
+	//var p0 = a[0];
+	for(var i=n;i<a.length-n;i++){
+		var p0=a[i-n];
+		var p=a[i];
+		var p1 = a[i+n];
+		var v0 = {x:p.x-p0.x,y:p.y-p0.y};
+		var v1 = {x:p1.x-p.x,y:p1.y-p.y};
+		var vdiff = {x:v0.x-v1.x,y:v0.y-v1.y};
+		var size = distance({x:0,y:0},vdiff); 
+		res.push({name:p0.name,x:i,y:size});
+	}
+	return res;	
+
+}
+
+function resample(a,len,n) {
+	a=a.slice();
+	var res = [a[0]];
+	var step = len/(n-1);
+	var D = 0;
+	var i = 1;
+	var p0 = a[i-1];
+	var p = a[i];
+
+	for(var i=1;i<a.length;i++) {
+		p0=a[i-1];
+		p=a[i];
+		var dist = distance(p,p0);
+		if(D+dist>=step) {
+			var x = p0.x+((step-D)/dist)*(p.x-p0.x);
+			var y = p0.y+((step-D)/dist)*(p.y-p0.y);
+			var q = {x:x,y:y};
+			res.push(q);
+			a.splice(i,0,q);
+			D=0;
+		}
+		else {
+			D += dist;
+		}
+		//res.push({name:p0.name,x:i,y:size});
+		//p0=p;
+	} while (i<a.length);
+	res.push(a[a.length-1]);
+	return res;	
+
+}
+
+
 function move(x,y){
 	context.lineTo(x,y);
 	context.stroke();
@@ -107,25 +158,38 @@ function move(x,y){
 	var height=pt1.y-pt.y;
 	var angle=Math.atan2(height,width)/Math.PI*180;
 
-	//context.beginPath();
-	//context.arc(x, y, 3, 0, 2 * Math.PI, true);
-	//context.fill();
-	context.fillStyle = '#f00';
-	context.fillText(angles.length,x+20,y);
+
+	//context.fillStyle = '#f00';
+	//context.fillText(angles.length,x+20,y);
 
 	pt=pt1;
 	len+=dist;
-	angles.push({x:len,y:angle,name:angles.length});
+	//angles.push({x:len,y:angle,name:angles.length});
+	angles.push({x:x,y:y,name:angles.length});
 	$('#debug').html(angle);
 }
 function release(x,y){
 	context.lineTo(x,y);
 	context.stroke();
 
-	
+	var resampled=resample(angles,len,30);
+
+	for(var k=0;k<resampled.length;k++) {
+		var p=resampled[k];
+		context.fillStyle = '#f00';
+		context.fillText(k,p.x+20,p.y);
+	}
+
 	//chart.addSeries({data:rev(diff(diff_angle(angles)))});
-	chart.addSeries({data:distant(diff_angle(angles))});
+	//chart.addSeries({data:distant(diff_angle(angles))});
+	for(var i=1;i<=10;i++)
+		chart.addSeries({data:vec_diff(resampled,i)});
+	//chart.addSeries({data:vec_diff(angles,2)});
+	//chart.addSeries({data:vec_diff(angles,3)});
+
 }
+
+
 
 
 
