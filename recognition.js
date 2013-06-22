@@ -61,38 +61,34 @@ function distance(p1,p2){
 	return Math.sqrt(width*width+height*height);
 }
 
-function diff(a){
-	var res = [];
-	var p0 = a[0]; 
+function pair_map(f,a) {
+	var res=[];
+	var p0=a[0];
 	for(var i=1;i<a.length;i++){
 		var p=a[i];
-		res.push({name:p0.name,x:p0.x,y:((p.y-p0.y)/(p.x-p0.x))});
+		res.push({name:p0.name,x:p0.x,y:f(p0,p)});
 		p0=p;
 	}
 	return res;
 
-	
+}
+
+function diff(a){
+	return pair_map(function(p0,p){
+		return ((p.y-p0.y)/(p.x-p0.x))
+	},a);	
 }
 function diff_angle(a){
-	var res = [];
-	var p0 = a[0]; 
-	for(var i=1;i<a.length;i++){
-		var p=a[i];
-		res.push({name:p0.name,x:p0.x,y:Math.atan2((p.y-p0.y),(p.x-p0.x))});
-		p0=p;
-	}
-	return res;	
+	return pair_map(function(p0,p){
+		return Math.atan2((p.y-p0.y),(p.x-p0.x))
+	},a);		
 }
 function rev(a){
-	var res = [];
-	var p0 = a[0]; 
-	for(var i=1;i<a.length;i++){
-		var p=a[i];
-		res.push({name:p0.name,x:p0.x,y:Math.abs(1/(p.y-p0.y))});
-		p0=p;
-	}
-	return res;	
+	return pair_map(function(p0,p){
+		return Math.abs(1/(p.y-p0.y))
+	},a);	
 }
+
 
 function distant(a){
 	var res = [];
@@ -105,6 +101,8 @@ function distant(a){
 	return res;	
 }
 
+
+
 function vec_diff(a,n) {
 	var res = [];
 	//var p0 = a[0];
@@ -116,10 +114,70 @@ function vec_diff(a,n) {
 		var v1 = {x:p1.x-p.x,y:p1.y-p.y};
 		var vdiff = {x:v0.x-v1.x,y:v0.y-v1.y};
 		var size = distance({x:0,y:0},vdiff); 
-		res.push({name:p0.name,x:i,y:size});
+		res.push({name:p.name,x:i,y:size});
 	}
 	return res;	
 
+}
+
+function local_max(a,n) {
+	var res = [];
+	//var p0 = a[0];
+	for(var i=n;i<a.length-n;i++){
+		var p0=a[i-n];
+		var p=a[i];
+		var p1 = a[i+n];
+		var local=true;
+		for(var j=i-n;j<i;j++) {
+			if(a[j].y>=a[j+1].y) {
+				local=false;
+				break;
+			}
+		}
+		for(var k=i+1;k<=i+n;k++) {
+			if(a[k-1].y<=a[k].y) {
+				local=false;
+				break;
+			}
+		}
+		if(local)res.push(p);
+	}
+	return res;	
+
+}
+
+function gather_corners(a,range,freq,leave_chains) {
+	if(!range)range=3;
+	if(!freq)freq=1;
+	freqs={};
+	var res=[];
+	for(var i=1;i<=10;i++) {
+		var cur=local_max(vec_diff(a,i),range);
+		cur.map(function(p){
+			if(freqs[p.x])freqs[p.x]++;
+			else freqs[p.x]=1;
+		})
+	}
+	for(var key in freqs) {
+		var value=freqs[key];
+		if(freqs.hasOwnProperty(key)&&value>freq) {
+			var pt=a[key];
+			pt.name=parseInt(key);
+			res.push(pt);
+		}
+	}
+	res=res.sort(function(p1,p2){return p1.name>p2.name});
+	if(!leave_chains) {
+		var bad_ind=[];
+		for(var i=1;i<res.length;i++)
+			if(res[i].name==res[i-1].name+1)
+				bad_ind.push(i);
+		for(var j=0;j<bad_ind.length;j++)
+			delete res[bad_ind[j]];
+		res=res.filter(function(a){return a});
+	}
+	return res;
+	
 }
 
 function resample(a,len,n) {
@@ -202,8 +260,16 @@ function release(x,y){
 	//chart.addSeries({data:distant(diff_angle(angles))});
 
 	insertChart();
-	for(var i=1;i<=10;i++)
+	for(var i=1;i<=10;i++) 
 		insertSeries(vec_diff(resampled,i));
+
+	var corners=gather_corners(resampled,1,1);
+	for(var i=0;i<corners.length;i++) {
+		context.strokeStyle="red";
+		var pt=corners[i];
+		console.log(pt);
+		context.fillRect(pt.x-2, pt.y-2, 10, 10);
+	}
 	//chart.addSeries({data:vec_diff(angles,2)});
 	//chart.addSeries({data:vec_diff(angles,3)});
 
